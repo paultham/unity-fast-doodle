@@ -1,6 +1,7 @@
 #%%
 from keras.utils.data_utils import get_file
 from models import *
+from pipeline import *
 import h5py
 
 class VGG19Weights:
@@ -82,8 +83,18 @@ from tests import *
 from losses import *
 
 def test_model(sess):
-    X = tf.placeholder(dtype=tf.float32, shape=[1,256,256,3], name='X')
-    M = tf.placeholder(dtype=tf.float32, shape=[4,256,256], name='M')
+    # X = tf.placeholder(dtype=tf.float32, shape=[1,256,256,3], name='X')
+    # M = tf.placeholder(dtype=tf.float32, shape=[4,256,256], name='M')
+
+    # cheating with the set shape, not efficient
+    M = process_mask('data/style_mask.jpg', 4)
+    _, h, w = M.shape
+    M = tf.constant(M, dtype=tf.float32)
+    
+    X = read_image('data/style.jpg')
+    X = tf.expand_dims(X, 0)
+    X.set_shape([1,h,w,3])
+
     ref = VGG19(X, M, 'ref')
     train = VGG19(X, M, 'train')
 
@@ -91,6 +102,6 @@ def test_model(sess):
         style_grams = [gram(l) for l in ref.style_layers]
 
     with tf.variable_scope('losses'):
-        style_loss(train, style_grams, 1.0)
+        loss = style_loss(train, style_grams, 1.0)
 
 summarize(test_model)  
