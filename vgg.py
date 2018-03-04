@@ -38,7 +38,7 @@ class VGG19:
         self.style_layers = []
         with VGG19Weights() as w:
             with tf.name_scope(name):
-                M = tf.expand_dims(M, -1)
+                M = tf.expand_dims(M, 0 )
                 X = tf.reverse(X, [3])
                 X = X - tf.constant([103.939, 116.779, 123.68], dtype=tf.float32, shape=[1, 1, 1, 3], name='img_mean')
                 with tf.name_scope('b1'):
@@ -50,6 +50,7 @@ class VGG19:
                     X = relu(conv(X, 3, 128, weights=w.get_weights(4), bias=True))
                     self.style_layers.append(self.resize_m(X, M))
                     X = relu(conv(X, 3, 128, weights=w.get_weights(5), bias=True))
+                    self.content_layer=X
                     X = max_pool(X)
                 with tf.name_scope('b3'):
                     X = relu(conv(X, 3, 256, weights=w.get_weights(7), bias=True))
@@ -75,33 +76,6 @@ class VGG19:
     def resize_m(self, X, M):
         _, h, w, _ = X.get_shape()
         M = tf.image.resize_images(M, [h, w])
-        I = tf.ones(shape=X.get_shape())
-        return tf.concat([X, I*M], 0)
-
-
-from tests import *
-from losses import *
-
-def test_model(sess):
-    # X = tf.placeholder(dtype=tf.float32, shape=[1,256,256,3], name='X')
-    # M = tf.placeholder(dtype=tf.float32, shape=[4,256,256], name='M')
-
-    # cheating with the set shape, not efficient
-    M = process_mask('data/style_mask.jpg', 4)
-    _, h, w = M.shape
-    M = tf.constant(M, dtype=tf.float32)
-    
-    X = read_image('data/style.jpg')
-    X = tf.expand_dims(X, 0)
-    X.set_shape([1,h,w,3])
-
-    ref = VGG19(X, M, 'ref')
-    train = VGG19(X, M, 'train')
-
-    with tf.variable_scope('grams'):
-        style_grams = [gram(l) for l in ref.style_layers]
-
-    with tf.variable_scope('losses'):
-        loss = style_loss(train, style_grams, 1.0)
-
-summarize(test_model)  
+        # I = tf.ones(shape=X.get_shape())
+        # return tf.concat([X, I*M], 0)
+        return tf.concat([X, M], 3)
