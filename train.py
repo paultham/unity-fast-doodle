@@ -7,6 +7,21 @@ from vgg import *
 from losses import *  
 from params import TrainingParams
 
+class TrainStep:
+    def __init__(self, gs, tl, sl):
+        self.train_step = gs
+        self.total_loss = tl
+        self.style_loss = sl
+        self.step_count = 0
+
+    def run_step(self, step_context):
+        if(self.step_count > 10):
+            step_context.request_stop()
+        self.step_count += 1
+        
+        print('step...')
+        return step_context.run_with_hooks([self.train_step, self.total_loss, self.style_loss])
+
 def train(params, start_new=False):
 
     tf.reset_default_graph()
@@ -41,14 +56,16 @@ def train(params, start_new=False):
     else:
         print('Continuing...')
 
-    # with tf.train.MonitoredTrainingSession(
-    #     checkpoint_dir=params.save_path, 
-    #     log_step_count_steps=params.log_step,
-    #     save_summaries_steps=params.summary_step
-    #     ) as sess:
-    #     while not sess.should_stop():
-    _, total_cost, style_cost = sess.run([train_step, J, J_style])
+    trainer = TrainStep(train_step, J, J_style)
 
+    with tf.train.MonitoredTrainingSession(
+        checkpoint_dir=params.save_path, 
+        log_step_count_steps=params.log_step,
+        save_summaries_steps=params.summary_step
+        ) as sess:
+        while not sess.should_stop():
+            _, total_cost, style_cost = sess.run_step_fn(trainer.run_step)
+    
     print('Done...')
 
-train(TrainingParams(), True)
+train(TrainingParams(), False)

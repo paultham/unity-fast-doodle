@@ -6,6 +6,6 @@ class TrainingParams:
         self.input_shape = [256,256,3]
         self.num_colors = 4
         self.save_path = 'summaries'
-        self.summary_step = 100
-        self.log_step = 100
+        self.summary_step = 2
+        self.log_step = 1
         self.learn_rate = 0.001
