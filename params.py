@@ -9,3 +9,9 @@ class TrainingParams:
         self.summary_step = 2
         self.log_step = 1
         self.learn_rate = 0.001
+
+        self.train_path = 'data/mask.trf'
+        self.total_train_sample = 10
+        self.batch_size = 1
+        self.num_epoch=1
+        self.read_thread = 1

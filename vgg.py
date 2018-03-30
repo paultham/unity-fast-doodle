@@ -38,7 +38,7 @@ class VGG19:
         self.style_layers = []
         with VGG19Weights() as w:
             with tf.name_scope(name):
-                M = tf.expand_dims(M, 0 )
+                # M = tf.expand_dims(M, 0 )
                 X = tf.reverse(X, [3])
                 X = X - tf.constant([103.939, 116.779, 123.68], dtype=tf.float32, shape=[1, 1, 1, 3], name='img_mean')
                 with tf.name_scope('b1'):

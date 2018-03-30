@@ -15,9 +15,9 @@ class TrainStep:
         self.step_count = 0
 
     def run_step(self, step_context):
-        if(self.step_count > 10):
-            step_context.request_stop()
-        self.step_count += 1
+        # if(self.step_count > 10):
+        #     step_context.request_stop()
+        # self.step_count += 1
         
         print('step...')
         return step_context.run_with_hooks([self.train_step, self.total_loss, self.style_loss])
@@ -34,8 +34,9 @@ def train(params, start_new=False):
 
     # M is an example of a doodle
     # for training, it is randomly generated using diamond square
-    M = tf.constant(generate_mask(params.num_colors, shape=input_shape), name='random_map', dtype=tf.float32)
-    R = tf.stack([M]) # batch them
+    # M = tf.constant(generate_mask(params.num_colors, shape=input_shape), name='random_map', dtype=tf.float32)
+    # R = tf.stack([M]) # batch them
+    R = create_tf_pipeline(params)
     # the randomly generated M is then given to the generator network to be transformed into the 
     # stylized artwork
     generator = SpriteGenerator(R,'Gen')

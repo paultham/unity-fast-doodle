@@ -5,17 +5,18 @@ import numpy as np
 import diamond as DS
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import OneHotEncoder
+from params import *
 
-# def process_map_tf(path, colors):
-#     img = tf.read_file(path)
-#     img = tf.image.decode_png(img, channels=3)
-#     shape = img.get_shape()
-#     img = tf.reshape(img, [-1,3])
-#     km = tf.contrib.factorization.KMeansClustering(num_clusters=colors)
-#     img = km.train(lambda:img).predict(img)
-#     img = tf.one_hot(img, colors)
-#     img = tf.reshape(img, [-1, img[0], img[1]])
-#     return img
+def process_map_tf(path, colors):
+    img = tf.read_file(path)
+    img = tf.image.decode_png(img, channels=3)
+    shape = img.get_shape()
+    img = tf.reshape(img, [-1,3])
+    km = tf.contrib.factorization.KMeansClustering(num_clusters=colors)
+    img = km.train(lambda:img).predict(img)
+    img = tf.one_hot(img, colors)
+    img = tf.reshape(img, [-1, img[0], img[1]])
+    return img
 
 def process_mask(path, colors):
     img = imageio.imread(path)[..., :3] # ignore alpha
@@ -47,8 +48,58 @@ def generate_mask(colors, shape = (256,256)):
     hmap = kmeans.predict(hmap)[:,None]
     hmap = OneHotEncoder(n_values=colors, sparse=False).fit_transform(hmap) # separate
     hmap = hmap.reshape([shape[0], shape[1], colors])
-    # hmap = hmap.transpose([0, 2, 1])
     return hmap
+
+def _img_feature(value):
+    return tf.train.Feature(float_list=tf.train.FloatList(value=value.flatten()))
+
+def make_one_example(img):
+    feature={'img':_img_feature(img)}
+    return tf.train.Example(features=tf.train.Features(feature=feature))
+
+def make_all_examples(params, count=1000):
+    tf.reset_default_graph()
+    sess = tf.InteractiveSession()
+
+    writer = None
+    for i in range(count):
+        if writer is None:
+            writer = tf.python_io.TFRecordWriter(params.mask_db)
+
+        print('Mask %i  of %i' % (i, count))
+        mask = generate_mask(params.num_colors, params.input_shape[:2])
+        writer.write(make_one_example(mask).SerializeToString())
+
+    writer.close()
+    writer = None
+
+def process_tf(x, num_colors, shape=None):
+    parsed_features = tf.parse_single_example(x, features={
+        'img':tf.FixedLenFeature([shape[0]*shape[1]*num_colors], dtype=tf.float32)
+    })
+    imgs = parsed_features['img']
+    imgs = tf.reshape(imgs, shape + [num_colors])
+    return imgs
+
+def create_tf_pipeline(params):
+    files = tf.data.TFRecordDataset(params.train_path)
+    files = files.map(lambda x: process_tf(x, params.num_colors, params.input_shape[0:2]), num_parallel_calls=params.read_thread)
+#     files = files.shuffle(params.total_train_sample)
+    files = files.take(params.total_train_sample)
+    files = files.batch(params.batch_size)
+    files = files.repeat(params.num_epoch)
+    files_iterator = files.make_one_shot_iterator()
+    next_files = files_iterator.get_next()
+    return next_files
+
+#make_all_examples('data/mask.trf', count=10)
+
+# tf.reset_default_graph()
+# sess = tf.InteractiveSession()
+# masks = create_tf_pipeline(TrainingParams())
+# for i in range(10):
+#     value = sess.run(masks)
+#     print(value.shape)
 
 # tf.reset_default_graph()
 # # img = process_mask('data/style_mask.jpg', 4)
