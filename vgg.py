@@ -75,6 +75,7 @@ class VGG19:
 
     def resize_m(self, X, M):
         _, h, w, _ = X.get_shape()
+        # print(M.get_shape())
         M = tf.image.resize_images(M, [h, w])
         # I = tf.ones(shape=X.get_shape())
         # return tf.concat([X, I*M], 0)

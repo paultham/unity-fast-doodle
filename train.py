@@ -15,34 +15,23 @@ class TrainStep:
         self.step_count = 0
 
     def run_step(self, step_context):
-        # if(self.step_count > 10):
-        #     step_context.request_stop()
-        # self.step_count += 1
-        
-        print('step...')
         return step_context.run_with_hooks([self.train_step, self.total_loss, self.style_loss])
 
 def train(params, start_new=False):
 
     tf.reset_default_graph()
+    sess = tf.InteractiveSession()
 
     params = TrainingParams()
     style_grams, input_shape = eval_style(params)
     
-    # tf.reset_default_graph()
-    sess = tf.InteractiveSession()
+    print('Initializing')
 
-    # M is an example of a doodle
-    # for training, it is randomly generated using diamond square
-    # M = tf.constant(generate_mask(params.num_colors, shape=input_shape), name='random_map', dtype=tf.float32)
-    # R = tf.stack([M]) # batch them
-    R = create_tf_pipeline(params)
-    # the randomly generated M is then given to the generator network to be transformed into the 
-    # stylized artwork
-    generator = SpriteGenerator(R,'Gen')
-    
+    masks = create_tf_pipeline(params)
+    generator = SpriteGenerator(masks,'Gen')
+
     # the output of the generator is then graded by the VGG19
-    train = VGG19(generator.output, M, 'train')
+    train = VGG19(generator.output, masks, 'train')
 
     # the total loss
     J, train_step, J_style, global_step = total_loss(train, style_grams, params)

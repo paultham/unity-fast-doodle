@@ -13,7 +13,9 @@ from pipeline import *
 
 def gram(X):
     with tf.variable_scope('gram'):
+        print(X.get_shape())
         m, h, w, c = X.get_shape().as_list()
+        m = 1 # wtf!
         X = tf.reshape(X, tf.stack([m, -1, c]))
         return tf.matmul(X, X, transpose_a=True) / tf.to_float(w*h*c)
 
@@ -49,6 +51,7 @@ def eval_style(params):
             
             X = process_img(params.style_path, (h, w, 3))
             X = tf.expand_dims(X, 0)
+            M = tf.stack([M])
             vggRef = VGG19(X, M, 'style_vgg')
             style_layers = [gram(l) for l in vggRef.style_layers]
             # return X, sess.run(style_layers), (h, w)

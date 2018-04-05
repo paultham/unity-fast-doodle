@@ -64,7 +64,7 @@ def make_all_examples(params, count=1000):
     writer = None
     for i in range(count):
         if writer is None:
-            writer = tf.python_io.TFRecordWriter(params.mask_db)
+            writer = tf.python_io.TFRecordWriter(params.train_path)
 
         print('Mask %i  of %i' % (i, count))
         mask = generate_mask(params.num_colors, params.input_shape[:2])
@@ -92,7 +92,7 @@ def create_tf_pipeline(params):
     next_files = files_iterator.get_next()
     return next_files
 
-#make_all_examples('data/mask.trf', count=10)
+# make_all_examples(TrainingParams(), count=10) 
 
 # tf.reset_default_graph()
 # sess = tf.InteractiveSession()
