@@ -13,7 +13,6 @@ from pipeline import *
 
 def gram(X):
     with tf.variable_scope('gram'):
-        print(X.get_shape())
         m, h, w, c = X.get_shape().as_list()
         m = 1 # wtf!
         X = tf.reshape(X, tf.stack([m, -1, c]))

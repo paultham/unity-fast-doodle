@@ -58,4 +58,4 @@ def train(params, start_new=False):
     
     print('Done...')
 
-train(TrainingParams(), False)
+train(TrainingParams(), True)

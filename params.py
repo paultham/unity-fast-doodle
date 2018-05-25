@@ -11,7 +11,8 @@ class TrainingParams:
         self.learn_rate = 0.001
 
         self.train_path = 'data/mask.trf'
-        self.total_train_sample = 10
+        self.num_train_files = 10
+        self.total_train_sample = 1000
         self.batch_size = 1
         self.num_epoch=1
         self.read_thread = 1

@@ -57,21 +57,24 @@ def make_one_example(img):
     feature={'img':_img_feature(img)}
     return tf.train.Example(features=tf.train.Features(feature=feature))
 
-def make_all_examples(params, count=1000):
+def make_all_examples(params, filecount=100, count=100):
     tf.reset_default_graph()
     sess = tf.InteractiveSession()
 
-    writer = None
-    for i in range(count):
-        if writer is None:
-            writer = tf.python_io.TFRecordWriter(params.train_path)
+    for f in range(filecount):
 
-        print('Mask %i  of %i' % (i, count))
-        mask = generate_mask(params.num_colors, params.input_shape[:2])
-        writer.write(make_one_example(mask).SerializeToString())
+        writer = None
+        for i in range(count):
+            if writer is None:
+                path = "%s%i" % (params.train_path, f)
+                writer = tf.python_io.TFRecordWriter(path)
 
-    writer.close()
-    writer = None
+            print('Mask %i  of %i' % (i, count))
+            mask = generate_mask(params.num_colors, params.input_shape[:2])
+            writer.write(make_one_example(mask).SerializeToString())
+
+        writer.close()
+        writer = None
 
 def process_tf(x, num_colors, shape=None):
     parsed_features = tf.parse_single_example(x, features={
@@ -82,7 +85,8 @@ def process_tf(x, num_colors, shape=None):
     return imgs
 
 def create_tf_pipeline(params):
-    files = tf.data.TFRecordDataset(params.train_path)
+    file_paths = ["%s%i" % (params.train_path, f) for f in range(params.num_train_files) ]
+    files = tf.data.TFRecordDataset(file_paths)
     files = files.map(lambda x: process_tf(x, params.num_colors, params.input_shape[0:2]), num_parallel_calls=params.read_thread)
 #     files = files.shuffle(params.total_train_sample)
     files = files.take(params.total_train_sample)
@@ -92,7 +96,7 @@ def create_tf_pipeline(params):
     next_files = files_iterator.get_next()
     return next_files
 
-# make_all_examples(TrainingParams(), count=10) 
+#make_all_examples(TrainingParams(), filecount=10, count=10) 
 
 # tf.reset_default_graph()
 # sess = tf.InteractiveSession()
